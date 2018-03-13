@@ -1,7 +1,4 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -11,13 +8,15 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.swing.JButton;
-import javax.swing.JFrame;
+import javax.swing.*;
+import javax.swing.border.Border;
 
-public class MapMaker implements MouseListener, ActionListener {
+import static java.awt.GridBagConstraints.BOTH;
 
-	int worldWidth = 2;
-	int worldHeight = 2;
+public class MapMaker extends JFrame implements MouseListener, ActionListener {
+
+	int worldWidth = 1;
+	int worldHeight = 1;
 	int chunkDim = 8;
 	int tileDim = 64;
 	
@@ -27,8 +26,11 @@ public class MapMaker implements MouseListener, ActionListener {
 	boolean firstRun = true;
 	
 	JFrame frame = new JFrame("Map Maker");
-	JButton save = new JButton();
-	Container topButtons = new Container();
+	JButton save = new JButton("Save");
+
+    Container contentPane = getContentPane();
+	GridBagLayout gridbag = new GridBagLayout();
+    GridBagConstraints c = new GridBagConstraints();
 	
 	BufferedImage[][] tempImageGrid = new BufferedImage[chunkDim][chunkDim];
 	
@@ -36,7 +38,7 @@ public class MapMaker implements MouseListener, ActionListener {
 	Color[][][][] worldColorArray = new Color[worldWidth][worldHeight][chunkDim][chunkDim];
 	
 	MapMakerPanel panel = new MapMakerPanel(worldImageArray, worldWidth, worldHeight, firstRun);
-	
+
 	File testMapFile = new File("res/testMap.png");
 	File tileKeyFile = new File("res/tileKey.png");
 	File colorKeyFile = new File("res/colorKey.png");
@@ -48,6 +50,13 @@ public class MapMaker implements MouseListener, ActionListener {
 	BufferedImage testImage;
 	
 	Color[][] colorKeyArray;
+
+	int paletteWidth = 4;
+	int paletteHeight = 5;
+	int paletteWindowWidth = paletteWidth*tileDim+(paletteWidth+1)*(tileDim/4);
+	int paletteWindowHeight = paletteHeight*tileDim+(paletteHeight+1)*(tileDim/4);
+	BufferedImage[][] paletteArray = new BufferedImage[paletteWidth][paletteHeight];
+    Palette palette = new Palette(paletteArray);
 	
 	int mapSheetDim = 8;
 	BufferedImage mapSheet = new BufferedImage(mapSheetDim, mapSheetDim, BufferedImage.TYPE_INT_ARGB);
@@ -59,6 +68,18 @@ public class MapMaker implements MouseListener, ActionListener {
 	
 	public MapMaker(){
 		init();
+
+		//creates palette
+        for (int x = 0; x < tileKey.getWidth()/tileDim; x++){
+            for (int y = 0; y < tileKey.getHeight()/tileDim; y++){
+                for (int i = 0; i < paletteArray.length; i++){
+                    for (int j = 0; j < paletteArray[0].length; j++){
+                        paletteArray[i][j] = tileKey.getSubimage(x*tileDim, y*tileDim, tileDim, tileDim);
+                    }
+                }
+            }
+        }
+
 		//creates a BufferedImage array of chunks
 		for (int chunkCoordX = 0; chunkCoordX < worldImageArray.length; chunkCoordX++) {
 			for (int chunkCoordY = 0; chunkCoordY < worldImageArray[0].length; chunkCoordY++) {
@@ -101,25 +122,58 @@ public class MapMaker implements MouseListener, ActionListener {
 		catch (IOException e) {
         	System.out.println("Error"+e);
         }
+
+        try {
+            tileKey = ImageIO.read(tileKeyFile);
+            System.out.println("Reading complete: tileKey");
+        }
+        catch (IOException e) {
+            System.out.println("Error"+e);
+        }
 		
 		colorKeyArray = new Color[colorKey.getWidth()][colorKey.getHeight()];
 		
 		//frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		frame.setSize(canvasX, canvasY);
-		frame.setLayout(new BorderLayout());
-		topButtons.setLayout(new GridLayout(1,1));
-		
-		save.setText("Save");
-		save.setName("Save");
-		topButtons.add(save);
-		frame.add(topButtons, BorderLayout.NORTH);
-		panel.setSize(tileDim*chunkDim, tileDim*chunkDim);
-		frame.add(panel, BorderLayout.CENTER);
-		//canvas.createBufferStrategy(3);
-		//BufferStrategy bufferStrategy = canvas.getBufferStrategy();
+		frame.setSize(canvasX+paletteWindowWidth+save.getHeight(), canvasY);
+		contentPane.setLayout(gridbag);
+
+		c.gridheight = 1;
+
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.anchor = GridBagConstraints.NORTHWEST;
+		gridbag.setConstraints(save, c);
+		contentPane.add(save);
+
+		palette.setSize(paletteWindowWidth, paletteWindowHeight);
+		palette.setBorder(BorderFactory.createLineBorder(Color.black));
+		c.fill = BOTH;
+		c.gridwidth = 1;
+		c.gridx = 0;
+		c.gridy = 1;
+		c.ipadx = paletteWindowWidth-12;
+		c.ipady = canvasY-12;
+		gridbag.setConstraints(palette, c);
+        contentPane.add(palette);
+
+		panel.setSize(canvasX, canvasY);
+		panel.setBorder(BorderFactory.createLineBorder(Color.black));
+		c.gridwidth = 1;
+		c.gridx = 1;
+		c.gridy = 1;
+		c.ipadx = canvasX-12;
+		c.ipady = canvasY-12;
+		gridbag.setConstraints(panel, c);
+		contentPane.add(panel);
+
+		palette.addMouseListener(this);
 		panel.addMouseListener(this);
+		frame.add(contentPane);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setResizable(false);
 		frame.setVisible(true);
+		frame.pack();
 	}
 
 	@Override
@@ -156,24 +210,25 @@ public class MapMaker implements MouseListener, ActionListener {
 	public void mouseReleased(MouseEvent event) {
 		// TODO Auto-generated method stub
 
-		System.out.println("X: "+event.getX());
-		System.out.println("Y: "+event.getY());
-		
-		int eChunkCoordX = (int)(((double)event.getX())/((double)canvasX/(double)worldWidth));
-		System.out.println("chunkX: "+eChunkCoordX);
-		
-		int eChunkCoordY = (int)(((double)event.getY())/((double)canvasY/(double)worldHeight));
-		System.out.println("chunkY: "+eChunkCoordY);
-		
-		int eTileCoordX = (int)(((double)event.getX()-(double)(eChunkCoordX*tileDim*chunkDim))/(double)tileDim);
-		System.out.println("tileX: "+eTileCoordX);
-		int eTileCoordY = (int)(((double)event.getY()-(double)(eChunkCoordY*tileDim*chunkDim))/(double)tileDim);
-		System.out.println("tileY: "+eTileCoordY);
-		
-		if(event.getSource().equals(panel)){
-			worldImageArray[eChunkCoordX][eChunkCoordY][eTileCoordX][eTileCoordY] = testImage;
-			frame.repaint();
-		}
+        if(event.getSource().equals(panel)) {
+            System.out.println("X: " + event.getX());
+            System.out.println("Y: " + event.getY());
+
+            int eChunkCoordX = (int) (((double) event.getX()) / ((double) canvasX / (double) worldWidth));
+            System.out.println("chunkX: " + eChunkCoordX);
+
+            int eChunkCoordY = (int) (((double) event.getY()) / ((double) canvasY / (double) worldHeight));
+            System.out.println("chunkY: " + eChunkCoordY);
+
+            int eTileCoordX = (int) (((double) event.getX() - (double) (eChunkCoordX * tileDim * chunkDim)) / (double) tileDim);
+            System.out.println("tileX: " + eTileCoordX);
+            int eTileCoordY = (int) (((double) event.getY() - (double) (eChunkCoordY * tileDim * chunkDim)) / (double) tileDim);
+            System.out.println("tileY: " + eTileCoordY);
+
+            worldImageArray[eChunkCoordX][eChunkCoordY][eTileCoordX][eTileCoordY] = testImage;
+            frame.repaint();
+            System.out.println("");
+        }
 	}
 
 }
