@@ -28,8 +28,8 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
 	//tile palette dimensions and object
     BufferedImage writeTile = null;
-    int selectedX;
-    int selectedY;
+    public static int selectedX = -1;
+    public static int selectedY = -1;
     int tileKeyWidth = 6;
     int tileKeyHeight = 4;
     int paletteTileWidth = 4;
@@ -37,7 +37,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     int paletteWindowWidth = paletteTileWidth*tileDim+(paletteTileWidth+1)*(tileDim/4); //space between tiles on palette is 16px
     int paletteWindowHeight = paletteTileHeight*tileDim+(paletteTileHeight+1)*(tileDim/4); //"
     BufferedImage[][] paletteArray = new BufferedImage[paletteTileWidth][paletteTileHeight];
-    Palette palette = new Palette(paletteArray, paletteTileWidth, paletteTileHeight, paletteWindowWidth, paletteWindowHeight, selectedX, selectedY);
+    Palette palette = new Palette(paletteArray, paletteTileWidth, paletteTileHeight, paletteWindowWidth, paletteWindowHeight);
 
 	//dimensions of the level canvas
 	int canvasX = worldWidth*chunkDim*tileDim;

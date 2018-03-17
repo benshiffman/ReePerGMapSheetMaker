@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.Buffer;
+import java.util.Map;
 
 public class Palette extends JPanel{
 
@@ -18,17 +19,13 @@ public class Palette extends JPanel{
     int paletteWindowHeight;
     int paletteWidth;
     int paletteHeight;
-    int selectedX;
-    int selectedY;
 
-    public Palette(BufferedImage[][] pA, int pW, int pH, int pWW, int pWH, int sX, int sY){
+    public Palette(BufferedImage[][] pA, int pW, int pH, int pWW, int pWH){
         paletteArray = pA;
         paletteWidth = pW;
         paletteHeight = pH;
         paletteWindowWidth = pWW;
         paletteWindowHeight = pWH;
-        selectedX = sX;
-        selectedY = sY;
     }
 
     public void paintComponent(Graphics g) {
@@ -59,9 +56,7 @@ public class Palette extends JPanel{
                 int xCoord = 16+(x*tileDim+(x*tileDim/4));
                 int yCoord = 16+(y*tileDim+(y*tileDim/4));
 
-                if(x == selectedX && y == selectedY){
-                    System.out.println("Palette selectedX: "+selectedX);
-                    System.out.println("Palette selectedY: "+selectedY);
+                if(x == MapMaker.selectedX && y == MapMaker.selectedY){
                     System.out.println("");
                     g.drawImage(selected, xCoord-2, yCoord-2, null);
                 }
