@@ -28,8 +28,8 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
 	//tile palette dimensions and object
     BufferedImage writeTile = null;
-    int selectedX = -1;
-    int selectedY = -1;
+    int selectedX;
+    int selectedY;
     int tileKeyWidth = 6;
     int tileKeyHeight = 4;
     int paletteTileWidth = 4;
@@ -233,8 +233,8 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		// TODO Auto-generated method stub
 
         if(event.getSource().equals(panel)) {
-            System.out.println("X: " + event.getX());
-            System.out.println("Y: " + event.getY());
+            //System.out.println("X: " + event.getX());
+            //System.out.println("Y: " + event.getY());
 
             int eChunkCoordX = (int) (((double) event.getX()) / ((double) canvasX / (double) worldWidth));
             //System.out.println("chunkX: " + eChunkCoordX);
@@ -266,8 +266,6 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             2: 11/4 to 15/4
             3: 16/4 to 20/4
             */
-
-
             for (int i = 1; i<=((paletteArray.length-1)*5)+1; i+=5){
                 int low = (i*tileDim)/4;
                 int high = ((i+4)*tileDim)/4;
@@ -284,10 +282,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             3: 16/4 to 20/4
             4: 21/4 to 25/4
             5: 26/4 to 30/4
-
-
             */
-
             for (int i = 1; i<=((paletteArray[0].length-1)*5)+1; i+=5){
                 int low = (i*tileDim)/4;
                 int high = ((i+4)*tileDim)/4;
@@ -298,9 +293,11 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             }
 
             if(paletteCoordX!=-1 && paletteCoordY!=-1){
-                writeTile = paletteArray[paletteCoordX][paletteCoordY];
                 selectedX = paletteCoordX;
                 selectedY = paletteCoordY;
+                System.out.println("MapMaker selectedX: "+selectedX);
+                System.out.println("MapMaker selectedY: "+selectedY);
+                writeTile = paletteArray[paletteCoordX][paletteCoordY];
                 palette.repaint();
                 System.out.println("test");
 

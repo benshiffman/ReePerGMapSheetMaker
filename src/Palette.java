@@ -18,18 +18,17 @@ public class Palette extends JPanel{
     int paletteWindowHeight;
     int paletteWidth;
     int paletteHeight;
+    int selectedX;
+    int selectedY;
 
-    public Palette(BufferedImage[][] pA, int pW, int pH, int pWW, int pWH){
+    public Palette(BufferedImage[][] pA, int pW, int pH, int pWW, int pWH, int sX, int sY){
         paletteArray = pA;
         paletteWidth = pW;
         paletteHeight = pH;
         paletteWindowWidth = pWW;
         paletteWindowHeight = pWH;
-        try{
-            selected = ImageIO.read(selectedFile);
-        } catch(IOException e){
-            System.out.println("Error" + e);
-        }
+        selectedX = sX;
+        selectedY = sY;
     }
 
     public void paintComponent(Graphics g) {
@@ -47,9 +46,26 @@ public class Palette extends JPanel{
             }
         }*/
 
+        try{
+            selected = ImageIO.read(selectedFile);
+            System.out.println("selected variable created");
+        }
+        catch(IOException e){
+            System.out.println("Error" + e);
+        }
+
         for (int x = 0; x < paletteArray.length; x++){
             for (int y = 0; y < paletteArray[0].length; y++){
-                g.drawImage(paletteArray[x][y], 16+(x*tileDim+(x*tileDim/4)), 16+(y*tileDim+(y*tileDim/4)), null);
+                int xCoord = 16+(x*tileDim+(x*tileDim/4));
+                int yCoord = 16+(y*tileDim+(y*tileDim/4));
+
+                if(x == selectedX && y == selectedY){
+                    System.out.println("Palette selectedX: "+selectedX);
+                    System.out.println("Palette selectedY: "+selectedY);
+                    System.out.println("");
+                    g.drawImage(selected, xCoord-2, yCoord-2, null);
+                }
+                g.drawImage(paletteArray[x][y], xCoord, yCoord, null);
             }
         }
     }

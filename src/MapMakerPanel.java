@@ -43,13 +43,6 @@ public class MapMakerPanel extends JPanel{
 	}
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
-
-        /*for (int x = 0; x < (canvasX/tileDim); x += tileDim) {
-            for (int y = 0; y < (canvasY/tileDim); y += tileDim) {
-                System.out.println("blank");
-                g.drawImage(blank, x, y, null);
-            }
-        }*/
 		
 		//draws entire map
 		for (int chunkX = 0; chunkX < world.length; chunkX++) {
