@@ -9,57 +9,67 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.Border;
 
 import static java.awt.GridBagConstraints.BOTH;
 
 public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
+    //level maker dimensions
 	int worldWidth = 1;
 	int worldHeight = 1;
 	int chunkDim = 8;
 	int tileDim = 64;
-	
+
+    //these arrays hold the BufferedImage tiles and color values for the whole level
+    BufferedImage[][][][] worldImageArray = new BufferedImage[worldWidth][worldHeight][chunkDim][chunkDim];
+    Color[][][][] worldColorArray = new Color[worldWidth][worldHeight][chunkDim][chunkDim];
+
+    MapMakerPanel panel = new MapMakerPanel(worldImageArray, worldWidth, worldHeight);
+
+	//tile palette dimensions and object
+    int tileKeyWidth = 6;
+    int tileKeyHeight = 4;
+    int paletteTileWidth = 4;
+    int paletteTileHeight = 6;
+    int paletteWindowWidth = paletteTileWidth*tileDim+(paletteTileWidth+1)*(tileDim/4); //space between tiles on palette is 16px
+    int paletteWindowHeight = paletteTileHeight*tileDim+(paletteTileHeight+1)*(tileDim/4); //"
+    BufferedImage[][] paletteArray = new BufferedImage[paletteTileWidth][paletteTileHeight];
+    Palette palette = new Palette(paletteArray, paletteTileWidth, paletteTileHeight, paletteWindowWidth, paletteWindowHeight);
+
+	//dimensions of the level canvas
 	int canvasX = worldWidth*chunkDim*tileDim;
 	int canvasY = worldHeight*chunkDim*tileDim;
-	
-	boolean firstRun = true;
-	
+
+	//default swing components
 	JFrame frame = new JFrame("Map Maker");
 	JButton save = new JButton("Save");
 
+	//layout variables
     Container contentPane = getContentPane();
 	GridBagLayout gridbag = new GridBagLayout();
     GridBagConstraints c = new GridBagConstraints();
 	
 	BufferedImage[][] tempImageGrid = new BufferedImage[chunkDim][chunkDim];
-	
-	BufferedImage[][][][] worldImageArray = new BufferedImage[worldWidth][worldHeight][chunkDim][chunkDim];
-	Color[][][][] worldColorArray = new Color[worldWidth][worldHeight][chunkDim][chunkDim];
-	
-	MapMakerPanel panel = new MapMakerPanel(worldImageArray, worldWidth, worldHeight, firstRun);
 
+	//image files
 	File testMapFile = new File("res/testMap.png");
 	File tileKeyFile = new File("res/tileKey.png");
 	File colorKeyFile = new File("res/colorKey.png");
 	File canvasFile = new File("res/canvas.png");
 	File testImageFile = new File("res/testImage.png");
-	
+
+
+	//BufferedImage variables
 	BufferedImage colorKey;
 	BufferedImage tileKey;
 	BufferedImage testImage;
+	BufferedImage writeTile = null;
 	
-	Color[][] colorKeyArray;
+	Color[][] colorKeyArray; //stores Color data type values of each pixel of the colorKey
 
-	int paletteWidth = 4;
-	int paletteHeight = 5;
-	int paletteWindowWidth = paletteWidth*tileDim+(paletteWidth+1)*(tileDim/4);
-	int paletteWindowHeight = paletteHeight*tileDim+(paletteHeight+1)*(tileDim/4);
-	BufferedImage[][] paletteArray = new BufferedImage[paletteWidth][paletteHeight];
-    Palette palette = new Palette(paletteArray);
-	
+    //
 	int mapSheetDim = 8;
-	BufferedImage mapSheet = new BufferedImage(mapSheetDim, mapSheetDim, BufferedImage.TYPE_INT_ARGB);
+	BufferedImage mapSheet = new BufferedImage(mapSheetDim*worldWidth, mapSheetDim*worldHeight, BufferedImage.TYPE_INT_ARGB);
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -70,15 +80,23 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		init();
 
 		//creates palette
-        for (int x = 0; x < tileKey.getWidth()/tileDim; x++){
-            for (int y = 0; y < tileKey.getHeight()/tileDim; y++){
-                for (int i = 0; i < paletteArray.length; i++){
-                    for (int j = 0; j < paletteArray[0].length; j++){
-                        paletteArray[i][j] = tileKey.getSubimage(x*tileDim, y*tileDim, tileDim, tileDim);
+        /*for (int i = 0; i < paletteArray.length; i++){
+            for (int j = 0; j < paletteArray[0].length; j++){
+                for (int x = 0; x < tileKeyWidth*tileDim; x+=tileDim){
+                    for (int y = 0; y < tileKeyHeight*tileDim; y+=tileDim){
+                        paletteArray[i][j] = tileKey.getSubimage(x, y, tileDim, tileDim);
                     }
                 }
             }
+        }*/
+
+        for (int i = 0; i < paletteArray.length; i++){
+            for (int j = 0; j < paletteArray[0].length; j++){
+                paletteArray[i][j] = tileKey.getSubimage(j*tileDim, i*tileDim, tileDim, tileDim);
+            }
         }
+
+        palette.repaint();
 
 		//creates a BufferedImage array of chunks
 		for (int chunkCoordX = 0; chunkCoordX < worldImageArray.length; chunkCoordX++) {
@@ -105,7 +123,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 	}
 	
 	public void init(){
-		firstRun = false;
+		//firstRun = false;
 		
 		try {
 			testImage = ImageIO.read(testImageFile);
@@ -135,6 +153,8 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		
 		//frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		frame.setSize(canvasX+paletteWindowWidth+save.getHeight(), canvasY);
+        JScrollPane scrollPane = new JScrollPane(palette);
+        getContentPane().add(scrollPane);
 		contentPane.setLayout(gridbag);
 
 		c.gridheight = 1;
@@ -215,19 +235,69 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             System.out.println("Y: " + event.getY());
 
             int eChunkCoordX = (int) (((double) event.getX()) / ((double) canvasX / (double) worldWidth));
-            System.out.println("chunkX: " + eChunkCoordX);
+            //System.out.println("chunkX: " + eChunkCoordX);
 
             int eChunkCoordY = (int) (((double) event.getY()) / ((double) canvasY / (double) worldHeight));
-            System.out.println("chunkY: " + eChunkCoordY);
+            //System.out.println("chunkY: " + eChunkCoordY);
 
             int eTileCoordX = (int) (((double) event.getX() - (double) (eChunkCoordX * tileDim * chunkDim)) / (double) tileDim);
-            System.out.println("tileX: " + eTileCoordX);
+            //System.out.println("tileX: " + eTileCoordX);
             int eTileCoordY = (int) (((double) event.getY() - (double) (eChunkCoordY * tileDim * chunkDim)) / (double) tileDim);
-            System.out.println("tileY: " + eTileCoordY);
+            //System.out.println("tileY: " + eTileCoordY);
 
-            worldImageArray[eChunkCoordX][eChunkCoordY][eTileCoordX][eTileCoordY] = testImage;
-            frame.repaint();
-            System.out.println("");
+            worldImageArray[eChunkCoordX][eChunkCoordY][eTileCoordX][eTileCoordY] = writeTile;
+            panel.repaint();
+            //System.out.println("");
+        }
+
+        if(event.getSource().equals(palette)){
+            int x = event.getX();
+            int y = event.getY();
+            System.out.println(x);
+            System.out.println(y);
+            int paletteCoordX = -1;
+            int paletteCoordY = -1;
+
+            /*
+            0: 1/4 to 5/4
+            1: 6/4 to 10/4
+            2: 11/4 to 15/4
+            3: 16/4 to 20/4
+            */
+
+
+            for (int i = 1; i<=((paletteArray.length-1)*5)+1; i+=5){
+                int low = (i*tileDim)/4;
+                int high = ((i+4)*tileDim)/4;
+                if(x>=low && x<high){
+                    paletteCoordX = (i-1)/5;
+                    break;
+                }
+            }
+
+            /*
+            0: 1/4 to 5/4
+            1: 6/4 to 10/4
+            2: 11/4 to 15/4
+            3: 16/4 to 20/4
+            4: 21/4 to 25/4
+            5: 26/4 to 30/4
+
+
+            */
+
+            for (int i = 1; i<=((paletteArray[0].length-1)*5)+1; i+=5){
+                int low = (i*tileDim)/4;
+                int high = ((i+4)*tileDim)/4;
+                if(y>=low && y<high){
+                    paletteCoordY = (i-1)/5;
+                    break;
+                }
+            }
+
+            if(paletteCoordX!=-1 && paletteCoordY!=-1){
+                writeTile = paletteArray[paletteCoordX][paletteCoordY];
+            }
         }
 	}
 

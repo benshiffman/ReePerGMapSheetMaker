@@ -15,8 +15,8 @@ public class MapMakerPanel extends JPanel{
 	int worldHeight;
 	int worldWidth;
 	
-	int canvasX = worldWidth*chunkDim*tileDim;
-	int canvasY = worldHeight*chunkDim*tileDim;
+	int canvasX;
+	int canvasY;
 	
 	File testMapFile = new File("res/testMap.png");
 	File tileKeyFile = new File("res/tileKey.png");
@@ -26,45 +26,37 @@ public class MapMakerPanel extends JPanel{
 	
 	BufferedImage blank;
 	
-	boolean firstRun;
+	boolean firstRun = true;
 	
-	public MapMakerPanel(BufferedImage[][][][] in, int wH, int wW, boolean fR){
+	public MapMakerPanel(BufferedImage[][][][] in, int wH, int wW){
 		world = in;
 		worldHeight = wH;
 		worldWidth = wW;
-		firstRun = fR;
+		canvasX = worldWidth*chunkDim*tileDim;
+		canvasY = worldHeight*chunkDim*tileDim;
+        try{
+            blank = ImageIO.read(blankFile);
+        }
+        catch(IOException e){
+            System.out.println("Error"+e);
+        }
 	}
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
-		
-		//not working
-		/*try{
-			blank = ImageIO.read(blankFile);
-		}
-		catch(IOException e){
-			System.out.println("Error"+e);
-		}
-		
-		if (firstRun == true) {
-			for (int x = 0; x < canvasX / tileDim; x += tileDim) {
-				for (int y = 0; y < canvasY / tileDim; y += tileDim) {
-					g.drawImage(blank, x, y, null);
-				}
-			} 
-		}*/
-		
-		g.drawLine(0, 0, canvasX, canvasY);
-		for (int x = 1; x < canvasX / tileDim; x += tileDim) {
-			for (int y = 0; y < canvasY / tileDim; y += tileDim) {
-				
-			}
-		} 
+
+        /*for (int x = 0; x < (canvasX/tileDim); x += tileDim) {
+            for (int y = 0; y < (canvasY/tileDim); y += tileDim) {
+                System.out.println("blank");
+                g.drawImage(blank, x, y, null);
+            }
+        }*/
 		
 		//draws entire map
 		for (int chunkX = 0; chunkX < world.length; chunkX++) {
 			for (int chunkY = 0; chunkY < world[0].length; chunkY++) {
 				for (int tileX = 0; tileX < world[0][0].length * tileDim; tileX += tileDim) {
 					for (int tileY = 0; tileY < world[0][0][0].length * tileDim; tileY+=tileDim) {
+                        g.drawImage(blank, tileX+(chunkX*tileDim*chunkDim), tileY+(chunkY*tileDim*chunkDim), null);
 						g.drawImage(world[chunkX][chunkY][tileX / tileDim][tileY / tileDim], tileX+(chunkX*tileDim*chunkDim), tileY+(chunkY*tileDim*chunkDim), null);
 					}
 				}
