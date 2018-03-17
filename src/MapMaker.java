@@ -27,6 +27,9 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     MapMakerPanel panel = new MapMakerPanel(worldImageArray, worldWidth, worldHeight);
 
 	//tile palette dimensions and object
+    BufferedImage writeTile = null;
+    int selectedX = -1;
+    int selectedY = -1;
     int tileKeyWidth = 6;
     int tileKeyHeight = 4;
     int paletteTileWidth = 4;
@@ -34,7 +37,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     int paletteWindowWidth = paletteTileWidth*tileDim+(paletteTileWidth+1)*(tileDim/4); //space between tiles on palette is 16px
     int paletteWindowHeight = paletteTileHeight*tileDim+(paletteTileHeight+1)*(tileDim/4); //"
     BufferedImage[][] paletteArray = new BufferedImage[paletteTileWidth][paletteTileHeight];
-    Palette palette = new Palette(paletteArray, paletteTileWidth, paletteTileHeight, paletteWindowWidth, paletteWindowHeight);
+    Palette palette = new Palette(paletteArray, paletteTileWidth, paletteTileHeight, paletteWindowWidth, paletteWindowHeight, selectedX, selectedY);
 
 	//dimensions of the level canvas
 	int canvasX = worldWidth*chunkDim*tileDim;
@@ -63,7 +66,6 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 	BufferedImage colorKey;
 	BufferedImage tileKey;
 	BufferedImage testImage;
-	BufferedImage writeTile = null;
 	
 	Color[][] colorKeyArray; //stores Color data type values of each pixel of the colorKey
 
@@ -253,12 +255,12 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
         if(event.getSource().equals(palette)){
             int x = event.getX();
             int y = event.getY();
-            System.out.println(x);
-            System.out.println(y);
+            //System.out.println(x);
+            //System.out.println(y);
             int paletteCoordX = -1;
             int paletteCoordY = -1;
 
-            /*
+            /* multiply these by tileDim
             0: 1/4 to 5/4
             1: 6/4 to 10/4
             2: 11/4 to 15/4
@@ -275,7 +277,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
                 }
             }
 
-            /*
+            /* multiply these by tileDim
             0: 1/4 to 5/4
             1: 6/4 to 10/4
             2: 11/4 to 15/4
@@ -297,6 +299,11 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
             if(paletteCoordX!=-1 && paletteCoordY!=-1){
                 writeTile = paletteArray[paletteCoordX][paletteCoordY];
+                selectedX = paletteCoordX;
+                selectedY = paletteCoordY;
+                palette.repaint();
+                System.out.println("test");
+
             }
         }
 	}
