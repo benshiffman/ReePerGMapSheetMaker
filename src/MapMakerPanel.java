@@ -1,5 +1,4 @@
-import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +39,7 @@ public class MapMakerPanel extends JPanel{
         catch(IOException e){
             System.out.println("Error"+e);
         }
+        setPreferredSize(new Dimension(worldWidth*chunkDim*tileDim, worldHeight*chunkDim*tileDim));
 	}
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);

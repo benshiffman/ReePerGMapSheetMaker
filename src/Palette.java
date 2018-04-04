@@ -26,6 +26,7 @@ public class Palette extends JPanel{
         paletteHeight = pH;
         paletteWindowWidth = pWW;
         paletteWindowHeight = pWH;
+        setPreferredSize(new Dimension(paletteWindowWidth, paletteWindowHeight));
     }
 
     public void paintComponent(Graphics g) {
@@ -45,7 +46,7 @@ public class Palette extends JPanel{
 
         try{
             selected = ImageIO.read(selectedFile);
-            System.out.println("selected variable created");
+            //System.out.println("selected variable created");
         }
         catch(IOException e){
             System.out.println("Error" + e);
@@ -57,7 +58,6 @@ public class Palette extends JPanel{
                 int yCoord = 16+(y*tileDim+(y*tileDim/4));
 
                 if(x == MapMaker.selectedX && y == MapMaker.selectedY){
-                    System.out.println("");
                     g.drawImage(selected, xCoord-2, yCoord-2, null);
                 }
                 g.drawImage(paletteArray[x][y], xCoord, yCoord, null);

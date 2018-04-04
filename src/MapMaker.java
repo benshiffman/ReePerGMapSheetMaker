@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import static java.awt.GridBagConstraints.BOTH;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 
 public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
@@ -19,6 +20,10 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 	int worldHeight = 1;
 	int chunkDim = 8;
 	int tileDim = 64;
+
+    //dimensions of the level canvas
+    int canvasX = worldWidth*chunkDim*tileDim;
+    int canvasY = worldHeight*chunkDim*tileDim;
 
     //these arrays hold the BufferedImage tiles and color values for the whole level
     BufferedImage[][][][] worldImageArray = new BufferedImage[worldWidth][worldHeight][chunkDim][chunkDim];
@@ -30,18 +35,12 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     BufferedImage writeTile = null;
     public static int selectedX = -1;
     public static int selectedY = -1;
-    int tileKeyWidth = 6;
-    int tileKeyHeight = 4;
     int paletteTileWidth = 4;
-    int paletteTileHeight = 6;
+    int paletteTileHeight = 8;
     int paletteWindowWidth = paletteTileWidth*tileDim+(paletteTileWidth+1)*(tileDim/4); //space between tiles on palette is 16px
     int paletteWindowHeight = paletteTileHeight*tileDim+(paletteTileHeight+1)*(tileDim/4); //"
     BufferedImage[][] paletteArray = new BufferedImage[paletteTileWidth][paletteTileHeight];
     Palette palette = new Palette(paletteArray, paletteTileWidth, paletteTileHeight, paletteWindowWidth, paletteWindowHeight);
-
-	//dimensions of the level canvas
-	int canvasX = worldWidth*chunkDim*tileDim;
-	int canvasY = worldHeight*chunkDim*tileDim;
 
 	//default swing components
 	JFrame frame = new JFrame("Map Maker");
@@ -72,6 +71,9 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     //
 	int mapSheetDim = 8;
 	BufferedImage mapSheet = new BufferedImage(mapSheetDim*worldWidth, mapSheetDim*worldHeight, BufferedImage.TYPE_INT_ARGB);
+
+	//scroll bar
+    JScrollPane scrollPane = new JScrollPane(palette);
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -94,11 +96,11 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
         for (int i = 0; i < paletteArray.length; i++){
             for (int j = 0; j < paletteArray[0].length; j++){
-                paletteArray[i][j] = tileKey.getSubimage(j*tileDim, i*tileDim, tileDim, tileDim);
+                paletteArray[i][j] = tileKey.getSubimage(i*tileDim, j*tileDim, tileDim, tileDim);
             }
         }
 
-        palette.repaint();
+        scrollPane.repaint();
 
 		//creates a BufferedImage array of chunks
 		for (int chunkCoordX = 0; chunkCoordX < worldImageArray.length; chunkCoordX++) {
@@ -152,15 +154,15 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
         }
 		
 		colorKeyArray = new Color[colorKey.getWidth()][colorKey.getHeight()];
-		
-		//frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-		frame.setSize(canvasX+paletteWindowWidth+save.getHeight(), canvasY);
-        JScrollPane scrollPane = new JScrollPane(palette);
-        getContentPane().add(scrollPane);
+
+		scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(16, 0));
+		scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 16));
+		scrollPane.setPreferredSize(new Dimension(paletteWindowWidth+16, paletteWindowHeight+16));
+		System.out.println(scrollPane.getWidth()+" "+scrollPane.getHeight());
+        scrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
 		contentPane.setLayout(gridbag);
 
 		c.gridheight = 1;
-
 		c.gridwidth = 2;
 		c.gridx = 0;
 		c.gridy = 0;
@@ -168,20 +170,30 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		gridbag.setConstraints(save, c);
 		contentPane.add(save);
 
-		palette.setSize(paletteWindowWidth, paletteWindowHeight);
-		palette.setBorder(BorderFactory.createLineBorder(Color.black));
+		scrollPane.setSize(paletteWindowWidth, paletteWindowHeight);
+		scrollPane.setBorder(BorderFactory.createLineBorder(Color.black));
 		c.fill = BOTH;
 		c.gridwidth = 1;
+		c.gridheight = 1;
 		c.gridx = 0;
 		c.gridy = 1;
 		c.ipadx = paletteWindowWidth-12;
 		c.ipady = canvasY-12;
-		gridbag.setConstraints(palette, c);
-        contentPane.add(palette);
+		gridbag.setConstraints(scrollPane, c);
+        contentPane.add(scrollPane);
+
+        /*scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(scrollBarWidth, canvasY));
+        c.gridx = 1;
+        c.gridy = 1;
+        c.ipadx = 0;
+        c.ipady = 0;
+        gridbag.setConstraints(scrollPane, c);
+        contentPane.add(scrollPane);*/
 
 		panel.setSize(canvasX, canvasY);
 		panel.setBorder(BorderFactory.createLineBorder(Color.black));
 		c.gridwidth = 1;
+		c.gridheight = 1;
 		c.gridx = 1;
 		c.gridy = 1;
 		c.ipadx = canvasX-12;
@@ -192,10 +204,10 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		palette.addMouseListener(this);
 		panel.addMouseListener(this);
 		frame.add(contentPane);
+        frame.setSize(canvasX+scrollPane.getWidth()+10, canvasY+51);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
 		frame.setVisible(true);
-		frame.pack();
 	}
 
 	@Override
