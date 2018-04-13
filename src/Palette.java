@@ -15,6 +15,7 @@ public class Palette extends JPanel{
     int tileDim = 64;
 
     BufferedImage[][] paletteArray;
+    BufferedImage colorKey;
     int paletteWindowWidth;
     int paletteWindowHeight;
     int paletteWidth;

@@ -1,3 +1,5 @@
+import org.w3c.dom.css.RGBColor;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -5,7 +7,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -16,18 +20,32 @@ import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
     //level maker dimensions
-	int worldWidth = 1;
-	int worldHeight = 1;
-	int chunkDim = 8;
+	int worldWidth = 16;
+	int worldHeight = 16;
+	int windowDim = 8;
 	int tileDim = 64;
 
-    //dimensions of the level canvas
-    int canvasX = worldWidth*chunkDim*tileDim;
-    int canvasY = worldHeight*chunkDim*tileDim;
+    //dimensions of the visible level canvas
+    int canvasX = windowDim *tileDim;
+    int canvasY = windowDim *tileDim;
+
+    //image files
+    File tileKeyFile = new File("res/tileKey.png");
+    File colorKeyFile = new File("res/colorKey.png");
+    File testImageFile = new File("res/testImage.png");
+
+
+    //BufferedImage variables
+    BufferedImage colorKey;
+    BufferedImage tileKey;
+    BufferedImage testImage;
+
+    BufferedImage toSave = new BufferedImage(worldWidth, worldHeight, BufferedImage.TYPE_INT_ARGB);
+    File saveFile = new File("save.png");
 
     //these arrays hold the BufferedImage tiles and color values for the whole level
-    BufferedImage[][][][] worldImageArray = new BufferedImage[worldWidth][worldHeight][chunkDim][chunkDim];
-    Color[][][][] worldColorArray = new Color[worldWidth][worldHeight][chunkDim][chunkDim];
+    BufferedImage[][] worldImageArray = new BufferedImage[worldWidth][worldHeight];
+    Color[][] worldColorArray = new Color[worldWidth][worldHeight];
 
     MapMakerPanel panel = new MapMakerPanel(worldImageArray, worldWidth, worldHeight);
 
@@ -50,30 +68,14 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     Container contentPane = getContentPane();
 	GridBagLayout gridbag = new GridBagLayout();
     GridBagConstraints c = new GridBagConstraints();
-	
-	BufferedImage[][] tempImageGrid = new BufferedImage[chunkDim][chunkDim];
+    Container panels = new Container();
 
-	//image files
-	File testMapFile = new File("res/testMap.png");
-	File tileKeyFile = new File("res/tileKey.png");
-	File colorKeyFile = new File("res/colorKey.png");
-	File canvasFile = new File("res/canvas.png");
-	File testImageFile = new File("res/testImage.png");
-
-
-	//BufferedImage variables
-	BufferedImage colorKey;
-	BufferedImage tileKey;
-	BufferedImage testImage;
-	
+	//colorKey array in color values
 	Color[][] colorKeyArray; //stores Color data type values of each pixel of the colorKey
 
-    //
-	int mapSheetDim = 8;
-	BufferedImage mapSheet = new BufferedImage(mapSheetDim*worldWidth, mapSheetDim*worldHeight, BufferedImage.TYPE_INT_ARGB);
-
-	//scroll bar
-    JScrollPane scrollPane = new JScrollPane(palette);
+	//scroll panes
+    JScrollPane paletteScrollPane = new JScrollPane(palette);
+    JScrollPane panelScrollPane = new JScrollPane(panel);
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -100,43 +102,39 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             }
         }
 
-        scrollPane.repaint();
+        paletteScrollPane.repaint();
 
-		//creates a BufferedImage array of chunks
-		for (int chunkCoordX = 0; chunkCoordX < worldImageArray.length; chunkCoordX++) {
-			for (int chunkCoordY = 0; chunkCoordY < worldImageArray[0].length; chunkCoordY++) {
-				for (int tileCoordX = 0; tileCoordX < worldImageArray[0][0].length; tileCoordX++) {
-					for (int tileCoordY = 0; tileCoordY < worldImageArray[0][0][0].length; tileCoordY++) {
-						worldImageArray[chunkCoordX][chunkCoordY][tileCoordX][tileCoordY] = new BufferedImage(tileDim, tileDim, BufferedImage.TYPE_INT_ARGB);
-					}
-				}
-			}
-		}
-		
-		for (int colorKeyX = 0; colorKeyX < colorKeyArray.length; colorKeyX++) {
-			for (int colorKeyY = 0; colorKeyY < colorKeyArray.length; colorKeyY++) {
-				int rgba = colorKey.getRGB(colorKeyX, colorKeyY);
+		//creates BufferedImages in worldImageArray
+        for (int x = 0; x < worldImageArray.length; x++){
+            for (int y = 0; y < worldImageArray[0].length; y++){
+                worldImageArray[x][y] = new BufferedImage(tileDim, tileDim, BufferedImage.TYPE_INT_ARGB);
+            }
+        }
+
+        //creates placeholder color values in worldColorArray
+        for (int x = 0; x < worldColorArray.length; x++){
+            for (int y = 0; y < worldColorArray[0].length; y++){
+                worldColorArray[x][y] = new Color(0x00FFFFFF, true);
+            }
+        }
+
+        //transforms colorKey
+        colorKeyArray = new Color[colorKey.getWidth()][colorKey.getHeight()];
+		for (int x = 0; x < colorKeyArray.length; x++) {
+			for (int y = 0; y < colorKeyArray[0].length; y++) {
+				int rgba = colorKey.getRGB(x, y);
 				int red = (rgba >> 16) & 0xFF;
 				int green = (rgba >> 8) & 0xFF;
 				int blue = rgba & 0xFF;
 				int alpha = (rgba >> 24) & 0xFF;
 				
-				colorKeyArray[colorKeyX][colorKeyY] = new Color(red, green, blue, alpha);
+				colorKeyArray[x][y] = new Color(red, green, blue, alpha);
+				System.out.println("("+x+", "+y+"): "+red+", "+green+", "+blue+", "+alpha);
 			}
 		}
 	}
 	
 	public void init(){
-		//firstRun = false;
-		
-		try {
-			testImage = ImageIO.read(testImageFile);
-			System.out.println("Reading complete: testImage");
-        }
-		catch (IOException e) {
-        	System.out.println("Error"+e);
-        }
-		
 		try {
 			colorKey = ImageIO.read(colorKeyFile);
 			System.out.println("Reading complete: colorKey");
@@ -152,62 +150,49 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
         catch (IOException e) {
             System.out.println("Error"+e);
         }
-		
-		colorKeyArray = new Color[colorKey.getWidth()][colorKey.getHeight()];
 
-		scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(16, 0));
-		scrollPane.getHorizontalScrollBar().setPreferredSize(new Dimension(0, 16));
-		scrollPane.setPreferredSize(new Dimension(paletteWindowWidth+16, paletteWindowHeight+16));
-		System.out.println(scrollPane.getWidth()+" "+scrollPane.getHeight());
-        scrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+		paletteScrollPane.setPreferredSize(new Dimension(paletteWindowWidth+19, canvasY+19));
+        paletteScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+
+        panelScrollPane.setPreferredSize(new Dimension(canvasX+19, canvasY+19));
+        panelScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        panelScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        panels.setLayout(new BorderLayout());
+        panels.setPreferredSize(new Dimension(paletteScrollPane.getWidth()+panelScrollPane.getWidth()+5, panelScrollPane.getHeight()+19));
+        panels.add(paletteScrollPane, BorderLayout.LINE_START);
+        panels.add(panelScrollPane, BorderLayout.LINE_END);
+
 		contentPane.setLayout(gridbag);
 
 		c.gridheight = 1;
-		c.gridwidth = 2;
+		c.gridwidth = 1;
 		c.gridx = 0;
 		c.gridy = 0;
 		c.anchor = GridBagConstraints.NORTHWEST;
 		gridbag.setConstraints(save, c);
 		contentPane.add(save);
 
-		scrollPane.setSize(paletteWindowWidth, paletteWindowHeight);
-		scrollPane.setBorder(BorderFactory.createLineBorder(Color.black));
 		c.fill = BOTH;
-		c.gridwidth = 1;
-		c.gridheight = 1;
 		c.gridx = 0;
 		c.gridy = 1;
-		c.ipadx = paletteWindowWidth-12;
-		c.ipady = canvasY-12;
-		gridbag.setConstraints(scrollPane, c);
-        contentPane.add(scrollPane);
-
-        /*scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(scrollBarWidth, canvasY));
-        c.gridx = 1;
-        c.gridy = 1;
-        c.ipadx = 0;
-        c.ipady = 0;
-        gridbag.setConstraints(scrollPane, c);
-        contentPane.add(scrollPane);*/
-
-		panel.setSize(canvasX, canvasY);
-		panel.setBorder(BorderFactory.createLineBorder(Color.black));
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.gridx = 1;
-		c.gridy = 1;
-		c.ipadx = canvasX-12;
-		c.ipady = canvasY-12;
-		gridbag.setConstraints(panel, c);
-		contentPane.add(panel);
+		c.anchor = GridBagConstraints.SOUTHWEST;
+		c.ipadx = paletteWindowWidth+canvasX+32;
+		c.ipady = canvasY;
+		gridbag.setConstraints(panels, c);
+		contentPane.add(panels);
 
 		palette.addMouseListener(this);
 		panel.addMouseListener(this);
+		save.addMouseListener(this);
 		frame.add(contentPane);
-        frame.setSize(canvasX+scrollPane.getWidth()+10, canvasY+51);
+		System.out.println(paletteScrollPane.getWidth());
+        frame.setSize(paletteScrollPane.getWidth()+panelScrollPane.getWidth()+2, canvasY+64);
+        frame.setLocation(200, 100);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
 		frame.setVisible(true);
+		frame.pack();
 	}
 
 	@Override
@@ -248,20 +233,14 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             //System.out.println("X: " + event.getX());
             //System.out.println("Y: " + event.getY());
 
-            int eChunkCoordX = (int) (((double) event.getX()) / ((double) canvasX / (double) worldWidth));
-            //System.out.println("chunkX: " + eChunkCoordX);
+            int eventXCoord = (int)(((double)event.getX()) / ((double)tileDim));
+            int eventYCoord = (int)(((double)event.getY()) / ((double)tileDim));
 
-            int eChunkCoordY = (int) (((double) event.getY()) / ((double) canvasY / (double) worldHeight));
-            //System.out.println("chunkY: " + eChunkCoordY);
+            //System.out.println("Coordinates: "+eventXCoord+" "+eventYCoord);
+            worldImageArray[eventXCoord][eventYCoord] = writeTile;
+            toSave.setRGB(eventXCoord, eventYCoord, colorKeyArray[selectedX][selectedY].getRGB());
 
-            int eTileCoordX = (int) (((double) event.getX() - (double) (eChunkCoordX * tileDim * chunkDim)) / (double) tileDim);
-            //System.out.println("tileX: " + eTileCoordX);
-            int eTileCoordY = (int) (((double) event.getY() - (double) (eChunkCoordY * tileDim * chunkDim)) / (double) tileDim);
-            //System.out.println("tileY: " + eTileCoordY);
-
-            worldImageArray[eChunkCoordX][eChunkCoordY][eTileCoordX][eTileCoordY] = writeTile;
             panel.repaint();
-            //System.out.println("");
         }
 
         if(event.getSource().equals(palette)){
@@ -304,15 +283,31 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
                 }
             }
 
-            if(paletteCoordX!=-1 && paletteCoordY!=-1){
+            if(paletteCoordX!=-1 && paletteCoordY!=-1
+                    && ((new Color(colorKey.getRGB(paletteCoordX, paletteCoordY), true).getAlpha()!=0)
+                    || (paletteCoordX==0 && paletteCoordY==0))){
+
+                System.out.println(colorKey.getRGB(paletteCoordX, paletteCoordY));
                 selectedX = paletteCoordX;
                 selectedY = paletteCoordY;
-                System.out.println("MapMaker selectedX: "+selectedX);
-                System.out.println("MapMaker selectedY: "+selectedY);
+                //System.out.println("MapMaker selectedX: "+selectedX);
+                //System.out.println("MapMaker selectedY: "+selectedY);
                 writeTile = paletteArray[paletteCoordX][paletteCoordY];
-                palette.repaint();
-                System.out.println("test");
 
+                palette.repaint();
+
+            }
+        }
+
+        if(event.getSource().equals(save)){
+            String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
+            saveFile=new File("saves", "mapsheet"+timeStamp+".png");
+
+            try {
+                ImageIO.write(toSave, "png", saveFile);
+            }
+            catch (IOException e){
+                System.out.println("Error"+e);
             }
         }
 	}
