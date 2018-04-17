@@ -1,5 +1,3 @@
-import org.w3c.dom.css.RGBColor;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,17 +5,20 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import javax.swing.JFileChooser;
+
 import static java.awt.GridBagConstraints.BOTH;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 
 public class MapMaker extends JFrame implements MouseListener, ActionListener {
+
+    String windowTitle = "Map Maker";
 
     //level maker dimensions
 	int worldWidth = 16;
@@ -63,6 +64,8 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 	//default swing components
 	JFrame frame = new JFrame("Map Maker");
 	JButton save = new JButton("Save");
+	JButton saveAs = new JButton("Save As");
+	JButton open = new JButton("Open");
 
 	//layout variables
     Container contentPane = getContentPane();
@@ -129,7 +132,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 				int alpha = (rgba >> 24) & 0xFF;
 				
 				colorKeyArray[x][y] = new Color(red, green, blue, alpha);
-				System.out.println("("+x+", "+y+"): "+red+", "+green+", "+blue+", "+alpha);
+				//System.out.println("("+x+", "+y+"): "+red+", "+green+", "+blue+", "+alpha);
 			}
 		}
 	}
@@ -137,7 +140,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 	public void init(){
 		try {
 			colorKey = ImageIO.read(colorKeyFile);
-			System.out.println("Reading complete: colorKey");
+			//System.out.println("Reading complete: colorKey");
         }
 		catch (IOException e) {
         	System.out.println("Error"+e);
@@ -145,7 +148,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
         try {
             tileKey = ImageIO.read(tileKeyFile);
-            System.out.println("Reading complete: tileKey");
+            //System.out.println("Reading complete: tileKey");
         }
         catch (IOException e) {
             System.out.println("Error"+e);
@@ -169,13 +172,30 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		c.gridwidth = 1;
 		c.gridx = 0;
 		c.gridy = 0;
-		c.anchor = GridBagConstraints.NORTHWEST;
+		c.anchor = GridBagConstraints.WEST;
 		gridbag.setConstraints(save, c);
 		contentPane.add(save);
+
+        c.gridheight = 1;
+        c.gridwidth = 1;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+        gridbag.setConstraints(saveAs, c);
+        contentPane.add(saveAs);
+
+        c.gridheight = 1;
+        c.gridwidth = 1;
+        c.gridx = 2;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+        gridbag.setConstraints(open, c);
+        contentPane.add(open);
 
 		c.fill = BOTH;
 		c.gridx = 0;
 		c.gridy = 1;
+		c.gridwidth = 3;
 		c.anchor = GridBagConstraints.SOUTHWEST;
 		c.ipadx = paletteWindowWidth+canvasX+32;
 		c.ipady = canvasY;
@@ -185,9 +205,12 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		palette.addMouseListener(this);
 		panel.addMouseListener(this);
 		save.addMouseListener(this);
+		saveAs.addMouseListener(this);
+		open.addMouseListener(this);
+
 		frame.add(contentPane);
-		System.out.println(paletteScrollPane.getWidth());
-        frame.setSize(paletteScrollPane.getWidth()+panelScrollPane.getWidth()+2, canvasY+64);
+
+		frame.setName("Map Maker"+ windowTitle);
         frame.setLocation(200, 100);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
@@ -287,7 +310,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
                     && ((new Color(colorKey.getRGB(paletteCoordX, paletteCoordY), true).getAlpha()!=0)
                     || (paletteCoordX==0 && paletteCoordY==0))){
 
-                System.out.println(colorKey.getRGB(paletteCoordX, paletteCoordY));
+                //System.out.println(colorKey.getRGB(paletteCoordX, paletteCoordY));
                 selectedX = paletteCoordX;
                 selectedY = paletteCoordY;
                 //System.out.println("MapMaker selectedX: "+selectedX);
@@ -299,7 +322,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             }
         }
 
-        if(event.getSource().equals(save)){
+        if(event.getSource().equals(save) && windowTitle !=null){
             String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
             saveFile=new File("saves", "mapsheet"+timeStamp+".png");
 
@@ -308,6 +331,23 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             }
             catch (IOException e){
                 System.out.println("Error"+e);
+            }
+        }
+
+        if(event.getSource().equals(saveAs)){
+            JFileChooser chooser = new JFileChooser();
+            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")+"/saves"));
+            int result = chooser.showSaveDialog(new MapMakerFileChooser());
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = chooser.getSelectedFile();
+                windowTitle = "Map Maker -- "+selectedFile.getAbsolutePath()+".png";
+                frame.setName(windowTitle);
+                try {
+                    ImageIO.write(toSave, "png", new File("saves", selectedFile.getName()+".png"));
+                }
+                catch (IOException e){
+                    System.out.println("Error"+e);
+                }
             }
         }
 	}
