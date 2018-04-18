@@ -18,7 +18,12 @@ import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 
 public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
-    String windowTitle = "Map Maker";
+    final String defaultWindowTitle = "Map Maker";
+    String windowTitlePrefix = "Map Maker -- ";
+    String windowTitleBreaker = " -- ";
+    String windowTitleSuffix = "";
+
+    String currentFileName = "";
 
     //level maker dimensions
 	int worldWidth = 16;
@@ -33,7 +38,6 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
     //image files
     File tileKeyFile = new File("res/tileKey.png");
     File colorKeyFile = new File("res/colorKey.png");
-    File testImageFile = new File("res/testImage.png");
 
 
     //BufferedImage variables
@@ -63,6 +67,7 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 
 	//default swing components
 	JFrame frame = new JFrame("Map Maker");
+	JButton newFile = new JButton("New");
 	JButton save = new JButton("Save");
 	JButton saveAs = new JButton("Save As");
 	JButton open = new JButton("Open");
@@ -192,10 +197,18 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
         gridbag.setConstraints(open, c);
         contentPane.add(open);
 
+        c.gridheight = 1;
+        c.gridwidth = 1;
+        c.gridx = 3;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.WEST;
+        gridbag.setConstraints(newFile, c);
+        contentPane.add(newFile);
+
 		c.fill = BOTH;
 		c.gridx = 0;
 		c.gridy = 1;
-		c.gridwidth = 3;
+		c.gridwidth = 4;
 		c.anchor = GridBagConstraints.SOUTHWEST;
 		c.ipadx = paletteWindowWidth+canvasX+32;
 		c.ipady = canvasY;
@@ -207,10 +220,11 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
 		save.addMouseListener(this);
 		saveAs.addMouseListener(this);
 		open.addMouseListener(this);
+		newFile.addMouseListener(this);
 
 		frame.add(contentPane);
 
-		frame.setName("Map Maker"+ windowTitle);
+		frame.setTitle(defaultWindowTitle);
         frame.setLocation(200, 100);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
@@ -322,12 +336,9 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             }
         }
 
-        if(event.getSource().equals(save) && windowTitle !=null){
-            String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date());
-            saveFile=new File("saves", "mapsheet"+timeStamp+".png");
-
+        if(event.getSource().equals(save) && !frame.getTitle().equals(defaultWindowTitle)){
             try {
-                ImageIO.write(toSave, "png", saveFile);
+                ImageIO.write(toSave, "png", new File("saves", currentFileName+".png"));
             }
             catch (IOException e){
                 System.out.println("Error"+e);
@@ -340,8 +351,10 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
             int result = chooser.showSaveDialog(new MapMakerFileChooser());
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = chooser.getSelectedFile();
-                windowTitle = "Map Maker -- "+selectedFile.getAbsolutePath()+".png";
-                frame.setName(windowTitle);
+                currentFileName = selectedFile.getName();
+                windowTitleSuffix = selectedFile.getAbsolutePath()+".png";
+                frame.setTitle(windowTitlePrefix+windowTitleBreaker+windowTitleSuffix);
+                frame.repaint();
                 try {
                     ImageIO.write(toSave, "png", new File("saves", selectedFile.getName()+".png"));
                 }
@@ -349,6 +362,21 @@ public class MapMaker extends JFrame implements MouseListener, ActionListener {
                     System.out.println("Error"+e);
                 }
             }
+        }
+
+        if(event.getSource().equals(newFile)){
+            for (int x = 0; x < worldImageArray.length; x++){
+                for (int y = 0; y < worldImageArray[0].length; y++){
+                    worldImageArray[x][y] = new BufferedImage(tileDim, tileDim, BufferedImage.TYPE_INT_ARGB);
+                }
+            }
+            for (int x = 0; x < worldColorArray.length; x++){
+                for (int y = 0; y < worldColorArray[0].length; y++){
+                    worldColorArray[x][y] = new Color(0x00FFFFFF, true);
+                }
+            }
+            frame.setTitle(defaultWindowTitle);
+            frame.repaint();
         }
 	}
 
