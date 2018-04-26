@@ -10,23 +10,18 @@ public class MapMakerPanel extends JPanel{
 	
 	BufferedImage[][] world;
 	int tileDim = 64;
-	int chunkDim = 8;
 	int worldHeight;
 	int worldWidth;
-	
-	File testMapFile = new File("res/testMap.png");
-	File tileKeyFile = new File("res/tileKey.png");
-	File colorKeyFile = new File("res/colorKey.png");
-	File canvasFile = new File("res/canvas.png");
+
 	File tileborderFile = new File("res/tileborder.png");
 	
 	BufferedImage tileborder;
 	
-	public MapMakerPanel(BufferedImage[][] in, int wH, int wW){
+	public MapMakerPanel(BufferedImage[][] in, int wW, int wH){
 		world = in;
 
-		worldHeight = wH;
 		worldWidth = wW;
+		worldHeight = wH;
 
         try{
             tileborder = ImageIO.read(tileborderFile);
