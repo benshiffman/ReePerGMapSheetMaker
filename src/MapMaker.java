@@ -270,12 +270,15 @@ public class MapMaker extends JFrame implements MouseListener {
         frame.pack();
 	}
 
-    public MapMaker(int width, int height, BufferedImage[][] worldImages){
+    public MapMaker(int width, int height,
+                    BufferedImage[][] worldImages, Color[][] worldColors, BufferedImage saveImage,
+                    String newFrameTitleSuffix){
 
-        toSave = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        toSave = saveImage;//new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        currentFileName = newFrameTitleSuffix;
 
         worldImageArray = worldImages;
-        worldColorArray = new Color[width][height];
+        worldColorArray = worldColors;
 
         panel = new MapMakerPanel(worldImageArray, width, height);
 
@@ -310,14 +313,13 @@ public class MapMaker extends JFrame implements MouseListener {
                 worldImageArray[x][y] = new BufferedImage(tileDim, tileDim, BufferedImage.TYPE_INT_ARGB);
             }
         }*/
-        panel.repaint();
 
-        //creates placeholder color values in worldColorArray
-        for (int x = 0; x < worldColorArray.length; x++){
+        //creates placeholder color values in worldColorArray -- only runs in initial constructor
+        /*for (int x = 0; x < worldColorArray.length; x++){
             for (int y = 0; y < worldColorArray[0].length; y++){
                 worldColorArray[x][y] = new Color(0x00FFFFFF, true);
             }
-        }
+        }*/
 
         //transforms colorKey
         colorKeyArray = new Color[colorKey.getWidth()][colorKey.getHeight()];
@@ -437,7 +439,13 @@ public class MapMaker extends JFrame implements MouseListener {
         frame.add(contentPane);
 
         //frame stuff
-        //frame.setTitle(defaultWindowTitle);
+        if(newFrameTitleSuffix == ""){
+            frame.setTitle(defaultWindowTitle);
+        }
+        else{
+            frame.setTitle(windowTitlePrefix+windowTitleBreaker+newFrameTitleSuffix);
+        }
+
         frame.setLocation(200, 100);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
@@ -540,8 +548,9 @@ public class MapMaker extends JFrame implements MouseListener {
         }
 
         if(event.getSource().equals(save) && !frame.getTitle().equals(defaultWindowTitle)){
+            System.out.println("currentFileName: "+currentFileName);
             try {
-                ImageIO.write(toSave, "png", new File("saves", currentFileName+".png"));
+                ImageIO.write(toSave, "png", new File("saves", currentFileName));
             }
             catch (IOException e){
                 System.out.println("Error"+e);
@@ -586,6 +595,8 @@ public class MapMaker extends JFrame implements MouseListener {
                 int newHeight = openedColorImage.getHeight(); System.out.println(newHeight);
 
                 BufferedImage[][] newImageArray = new BufferedImage[newWidth][newHeight];
+                Color[][] newColorArray = new Color[newWidth][newHeight];
+                BufferedImage newSaveImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
                 for (int x = 0; x < newWidth; x++){
                     for (int y = 0; y < newHeight; y++){
 
@@ -593,6 +604,8 @@ public class MapMaker extends JFrame implements MouseListener {
                             for (int y2 = 0; y2 < colorKeyArray[0].length; y2++){
 
                                 if(openedColorImage.getRGB(x,y) == colorKey.getRGB(x2, y2)){
+                                    newColorArray[x][y] = new Color(colorKey.getRGB(x2, y2), true);
+                                    newSaveImage.setRGB(x, y, colorKey.getRGB(x2, y2));
                                     newImageArray[x][y] = tileKey.getSubimage(x2*tileDim, y2*tileDim, tileDim, tileDim);
                                 }
                             }
@@ -602,11 +615,11 @@ public class MapMaker extends JFrame implements MouseListener {
 
                 selectedX = -1;
                 selectedY = -1;
-                frame.dispose();
-                new MapMaker(newWidth, newHeight, newImageArray);
 
-                windowTitleSuffix = selectedFile.getAbsolutePath();
-                frame.setTitle(windowTitlePrefix+windowTitleBreaker+windowTitleSuffix); //NOT WORKING
+                windowTitleSuffix = selectedFile.getName();
+
+                frame.dispose();
+                new MapMaker(newWidth, newHeight, newImageArray, newColorArray, newSaveImage, windowTitleSuffix);
             }
         }
 
@@ -640,7 +653,17 @@ public class MapMaker extends JFrame implements MouseListener {
                     newImageArray[x][y] = new BufferedImage(tileDim, tileDim, BufferedImage.TYPE_INT_ARGB);
                 }
             }
-            new MapMaker(newWidth, newHeight, newImageArray);
+
+            Color[][] newColorArray = new Color[newWidth][newHeight];
+            for (int x = 0; x < newWidth; x++){
+                for (int y = 0; y < newHeight; y++){
+                    newColorArray[x][y] = new Color(colorKey.getRGB(0,0), true);
+                }
+            }
+
+            BufferedImage newSaveImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+
+            new MapMaker(newWidth, newHeight, newImageArray, newColorArray, newSaveImage, "");
 
             xDimField.setSelectedIndex(newWidth-minWorldDim); System.out.println(xDimField.getSelectedIndex());
             yDimField.setSelectedIndex(newHeight-minWorldDim); System.out.println(yDimField.getSelectedIndex());
