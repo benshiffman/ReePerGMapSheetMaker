@@ -12,7 +12,7 @@ import javax.swing.JFileChooser;
 import static java.awt.GridBagConstraints.BOTH;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 
-public class MapMaker extends JFrame implements MouseListener {
+public class MapMaker extends JFrame implements MouseListener, MouseMotionListener {
 
     final String defaultWindowTitle = "Map Maker";
     final String windowTitlePrefix = "Map Maker";
@@ -89,6 +89,7 @@ public class MapMaker extends JFrame implements MouseListener {
 	//scroll panes
     JScrollPane paletteScrollPane = new JScrollPane(palette);
     JScrollPane panelScrollPane;// = new JScrollPane(panel);
+    int unitIncrement = 5;
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -164,7 +165,9 @@ public class MapMaker extends JFrame implements MouseListener {
 
         panelScrollPane.setPreferredSize(new Dimension(canvasX+19, canvasY+19));
         panelScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        panelScrollPane.getHorizontalScrollBar().setUnitIncrement(unitIncrement);
         panelScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        panelScrollPane.getVerticalScrollBar().setUnitIncrement(unitIncrement);
 
         panels.setLayout(new BorderLayout());
         panels.setPreferredSize(new Dimension(paletteScrollPane.getWidth()+panelScrollPane.getWidth()+5, panelScrollPane.getHeight()+19));
@@ -250,6 +253,7 @@ public class MapMaker extends JFrame implements MouseListener {
 
         palette.addMouseListener(this);
         panel.addMouseListener(this);
+        panel.addMouseMotionListener(this);
         save.addMouseListener(this);
         saveAs.addMouseListener(this);
         open.addMouseListener(this);
@@ -341,7 +345,9 @@ public class MapMaker extends JFrame implements MouseListener {
 
         panelScrollPane.setPreferredSize(new Dimension(canvasX+19, canvasY+19));
         panelScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        panelScrollPane.getHorizontalScrollBar().setUnitIncrement(unitIncrement);
         panelScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        panelScrollPane.getVerticalScrollBar().setUnitIncrement(unitIncrement);
 
         panels.setLayout(new BorderLayout());
         panels.setPreferredSize(new Dimension(paletteScrollPane.getWidth()+panelScrollPane.getWidth()+5, panelScrollPane.getHeight()+19));
@@ -427,6 +433,7 @@ public class MapMaker extends JFrame implements MouseListener {
 
         palette.addMouseListener(this);
         panel.addMouseListener(this);
+        panel.addMouseMotionListener(this);
         save.addMouseListener(this);
         saveAs.addMouseListener(this);
         open.addMouseListener(this);
@@ -453,6 +460,29 @@ public class MapMaker extends JFrame implements MouseListener {
         frame.pack();
     }
 
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        //eventOutput("Mouse moved", e);
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent event) {
+        //eventOutput("Mouse dragged", event);
+        if(event.getSource().equals(panel) && selectedX!=-1 && selectedY!=-1) {
+            //System.out.println("X: " + event.getX());
+            //System.out.println("Y: " + event.getY());
+
+            int eventXCoord = (int)(((double)event.getX()) / ((double)tileDim));
+            int eventYCoord = (int)(((double)event.getY()) / ((double)tileDim));
+
+            //System.out.println("Coordinates: "+eventXCoord+" "+eventYCoord);
+            worldImageArray[eventXCoord][eventYCoord] = writeTile;
+            toSave.setRGB(eventXCoord, eventYCoord, colorKeyArray[selectedX][selectedY].getRGB());
+
+            panel.repaint();
+        }
+    }
+
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
 		// TODO Auto-generated method stub
@@ -471,8 +501,8 @@ public class MapMaker extends JFrame implements MouseListener {
 	@Override
 	public void mousePressed(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-	}
 
+	}
 	@Override
 	public void mouseReleased(MouseEvent event) {
 		// TODO Auto-generated method stub
